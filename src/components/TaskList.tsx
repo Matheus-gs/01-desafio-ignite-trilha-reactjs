@@ -2,9 +2,7 @@ import { useState } from 'react'
 
 import '../styles/tasklist.scss'
 
-import { FiCheckSquare } from 'react-icons/fi'
-
-import { TaskItem } from './TaskItem'
+import { FiTrash, FiCheckSquare } from 'react-icons/fi'
 
 interface Task {
     id: number
@@ -18,26 +16,38 @@ export function TaskList() {
 
     function handleCreateNewTask() {
         // Crie uma nova task com um id random, não permita criar caso o título seja vazio.
-        const randomId = Math.floor(Date.now() * Math.random())
-        newTaskTitle != '' && setTasks([...tasks, { id: randomId, title: newTaskTitle, isComplete: false }])
+        if (!newTaskTitle) return
 
-        setNewTaskTitle('') // Limpando o valor do input
+        const randomId = Math.floor(Date.now() * Math.random())
+
+        const newTask = {
+            id: randomId,
+            title: newTaskTitle,
+            isComplete: false,
+        }
+
+        setTasks(oldState => [...oldState, newTask])
+        setNewTaskTitle('')
+    }
+
+    function handleToggleTaskCompletion(id: number) {
+        // Altere entre `true` ou `false` o campo `isComplete` de uma task com dado ID
+        const newTasks = tasks.map(task =>
+            task.id === id
+                ? {
+                      ...task,
+                      isComplete: !task.isComplete,
+                  }
+                : task
+        )
+
+        setTasks(newTasks)
     }
 
     function handleRemoveTask(id: number) {
         // Remova uma task da listagem pelo ID
-
-        // Encontrando o indice onde o id é igual ao passado como parametro
-        let item = tasks.findIndex(item => item.id === id)
-
-        // Criando uma copia da nosssa lista
-        const newTaskList = [...tasks]
-
-        // Removendo da copia o item que identificamos o indice
-        newTaskList.splice(item, 1)
-
-        // Atualizando nosso state tasks
-        setTasks(newTaskList)
+        const filteredTasks = tasks.filter(task => task.id != id)
+        setTasks(filteredTasks)
     }
 
     return (
@@ -61,7 +71,27 @@ export function TaskList() {
             <main>
                 <ul>
                     {tasks.map(task => (
-                        <TaskItem task={task} key={task.id} removeTask={handleRemoveTask} />
+                        <li key={task.id}>
+                            <div className={task.isComplete ? 'completed' : ''} data-testid="task">
+                                <label className="checkbox-container">
+                                    <input
+                                        type="checkbox"
+                                        readOnly
+                                        onClick={() => handleToggleTaskCompletion(task.id)}
+                                    />
+                                    <span className="checkmark"></span>
+                                </label>
+                                <p>{task.title}</p>
+                            </div>
+
+                            <button
+                                type="button"
+                                data-testid="remove-task-button"
+                                onClick={() => handleRemoveTask(task.id)}
+                            >
+                                <FiTrash size={16} />
+                            </button>
+                        </li>
                     ))}
                 </ul>
             </main>
